@@ -61,7 +61,7 @@ var thirdparty = {
 
                             // date comparison is in milliseconds
                             var minDiff = (cachedTweets) ? cachedTweets.date - new Date() / 60000 : false;
-                            if(cachedTweets == undefined || minDiff > 30)  {
+                            if(cachedTweets == undefined || minDiff > 5)  {
                                 uniqTweets = me.getUniqueTweets(tweets);
                                 myCache.set('tweetlist', {
                                     date: new Date(),
