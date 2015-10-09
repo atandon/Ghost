@@ -35,10 +35,10 @@ var thirdparty = {
                     if(tweet.user.screen_name === process.env.TWITTER_HANDLE && uniqTweets.length > 1 && uniqTweets[0].user.screen_name !== process.env.TWITTER_HANDLE) {
                         firstTweet = uniqTweets[0];
                         uniqTweets[0] = tweet;
-                        uniqTweets[uniqTweets.length - 1] = firstTweet;
+                        uniqTweets[uniqTweets.length] = firstTweet;
+                    } else {
+                        uniqTweets.push(tweet);
                     }
-
-                    uniqTweets.push(tweet);
                 }
             };
 
