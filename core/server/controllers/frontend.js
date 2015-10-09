@@ -223,8 +223,13 @@ function renderChannel(channelOpts) {
                         result = formatPageResponse(posts, page);
                     }
 
-                    setResponseContext(req, res);
-                    res.render(view, result);
+                    var client = api.thirdparty.twitter.init();
+                    api.thirdparty.twitter.getAll(client, function(tweetsArr) {
+                        result['twitter'] = tweetsArr;
+
+                        setResponseContext(req, res);
+                        res.render(view, result);
+                    });
                 });
             });
         }).catch(handleError(next));

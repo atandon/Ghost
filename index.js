@@ -12,6 +12,7 @@ require('./core/server/utils/startup-check').check();
 express = require('express');
 ghost = require('./core');
 errors = require('./core/server/errors');
+require('./env');
 
 // Create our parent express app instance.
 parentApp = express();
