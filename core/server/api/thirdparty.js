@@ -32,10 +32,10 @@ var thirdparty = {
                     tweetHandleArr.push(tweet.user.screen_name);
 
                     // Set owner tweet to the top of the heap, move first tweet to bottom
-                    if(tweet.user.screen_name === process.env.TWITTER_HANDLE && uniqTweets.length > 0) {
+                    if(tweet.user.screen_name === process.env.TWITTER_HANDLE && uniqTweets.length > 1 && uniqTweets[0].user.screen_name !== process.env.TWITTER_HANDLE) {
                         firstTweet = uniqTweets[0];
                         uniqTweets[0] = tweet;
-                        uniqTweets.push(firstTweet);
+                        uniqTweets[uniqTweets.length - 1] = firstTweet;
                     }
 
                     uniqTweets.push(tweet);
@@ -45,38 +45,62 @@ var thirdparty = {
             return uniqTweets;
         },
 
-        getAll: function(client, callback) {
+        requestTweets: function(client, callback) {
             var me = this;
             
-            return client.get('lists/statuses.json', {
+            client.get('lists/statuses.json', {
                 list_id: process.env.TWITTER_LIST_ID,
                 include_rts: false,
-                count: 500
+                count: 200
             }, function(error, tweets, response){
-                if (!error) {
+                if(error) {
+                    callback('error');
+                    return;
+                }
 
-                    myCache.get('tweetlist', function(err, cachedTweets) {
-                        if( !err) {
-                            // Tweets are not cached
+                client.get('lists/statuses.json', {
+                            list_id: process.env.TWITTER_LIST_ID,
+                            include_rts: false,
+                            count: 200,
+                            max_id: tweets[tweets.length - 1].id
+                }, function(errorTwo, tweetsSecond, responseTwo) {
+                    if (errorTwo) {
+                        callback('error');
+                        return;
+                    }
 
-                            // date comparison is in milliseconds
-                            var minDiff = (cachedTweets) ? cachedTweets.date - new Date() / 60000 : false;
-                            if(cachedTweets == undefined || minDiff > 5)  {
-                                uniqTweets = me.getUniqueTweets(tweets);
-                                myCache.set('tweetlist', {
-                                    date: new Date(),
-                                    data: uniqTweets
-                                });
-                            } else {
-                                // tweets are cached
-                                uniqTweets = cachedTweets.data;
-                            }
+                    var allTweets = tweets.concat(tweetsSecond);
+                    callback(allTweets);
+                });
+            });
+        },
+
+        getAll: function(client, callback) {
+            var me = this;
+            var uniqTweets;
+
+            myCache.get('tweetlist', function(err, cachedTweets) {
+                if( !err) {
+                    // Tweets are not cached
+
+                    // date comparison is in milliseconds
+                    var minDiff = (cachedTweets) ? cachedTweets.date - new Date() / 60000 : false;
+                    if(cachedTweets == undefined || minDiff > 5)  {
+                        me.requestTweets(client, function(tweets) {
+                            uniqTweets = me.getUniqueTweets(tweets);
+
+                            myCache.set('tweetlist', {
+                                date: new Date(),
+                                data: uniqTweets
+                            });
 
                             callback(uniqTweets);
-                        }
-                    });
-                } else {
-                    callback(error);
+                        });
+                    } else {
+                        // tweets are cached
+                        uniqTweets = cachedTweets.data;
+                        callback(uniqTweets);
+                    }
                 }
             });
         }
